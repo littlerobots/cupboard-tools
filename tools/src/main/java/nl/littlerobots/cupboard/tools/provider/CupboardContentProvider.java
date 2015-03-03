@@ -19,7 +19,6 @@ import static nl.qbusict.cupboard.CupboardFactory.cupboard;
  * Content provider that reduces boilerplate for the common cases:
  * <ul>
  * <li>Defines a content uri for a single entity and collection (query) of entities</li>
- * <li>Holds a static UriHelper to map entities to uri in a single place</li>
  * <li>Returns a cursor that notifies on changes to the dataset</li>
  * <li>Provides a callback to control notification with optional sync to network</li>
  * <li>Has a helper for for finding an existing entity based on an external id for inserts (e.g. update with external key)</li>
@@ -27,9 +26,6 @@ import static nl.qbusict.cupboard.CupboardFactory.cupboard;
  * <p/>
  */
 public abstract class CupboardContentProvider extends SQLiteContentProvider {
-
-    private static final String DEFAULT_DATABASE_NAME = "cupboard.db";
-    private static final int DEFAULT_DATABASE_VERSION = 1;
 
     /**
      * Query parameter: set to "false" if the cursor should not notify
@@ -39,28 +35,21 @@ public abstract class CupboardContentProvider extends SQLiteContentProvider {
     public static final String DISTINCT_PARAMETER = "distinct";
     public static final String GROUP_BY_PARAMETER = "groupBy";
     public static final String HAVING_PARAMETER = "having";
-
-    private UriHelper mUriHelper;
-
+    private static final String DEFAULT_DATABASE_NAME = "cupboard.db";
+    private static final int DEFAULT_DATABASE_VERSION = 1;
     private final String mDatabaseName;
     private final int mDatabaseVersion;
     protected Cupboard mCupboard = cupboard();
+    private UriHelper mUriHelper;
 
-    private class DatabaseHelper extends SQLiteOpenHelper {
+    protected CupboardContentProvider(String databaseName, int databaseVersion) {
+        mDatabaseName = databaseName;
+        mDatabaseVersion = databaseVersion;
+        mCupboard = createCupboard();
+    }
 
-        public DatabaseHelper(Context context, String name, int version) {
-            super(context, name, null, version);
-        }
-
-        @Override
-        public void onCreate(SQLiteDatabase db) {
-            onCreateDatabase(db);
-        }
-
-        @Override
-        public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-            onUpgradeDatabase(db, oldVersion, newVersion);
-        }
+    protected CupboardContentProvider(int databaseVersion) {
+        this(DEFAULT_DATABASE_NAME, databaseVersion);
     }
 
     /**
@@ -83,16 +72,6 @@ public abstract class CupboardContentProvider extends SQLiteContentProvider {
      */
     protected void onCreateDatabase(SQLiteDatabase db) {
         mCupboard.withDatabase(db).createTables();
-    }
-
-    protected CupboardContentProvider(String databaseName, int databaseVersion) {
-        mDatabaseName = databaseName;
-        mDatabaseVersion = databaseVersion;
-        mCupboard = createCupboard();
-    }
-
-    protected CupboardContentProvider(int databaseVersion) {
-        this(DEFAULT_DATABASE_NAME, databaseVersion);
     }
 
     /**
@@ -217,5 +196,22 @@ public abstract class CupboardContentProvider extends SQLiteContentProvider {
      * @param contentValues the content values for the entity to be inserted.
      */
     protected void setExistingId(SQLiteDatabase db, Class<?> entityClass, ContentValues contentValues) {
+    }
+
+    private class DatabaseHelper extends SQLiteOpenHelper {
+
+        public DatabaseHelper(Context context, String name, int version) {
+            super(context, name, null, version);
+        }
+
+        @Override
+        public void onCreate(SQLiteDatabase db) {
+            onCreateDatabase(db);
+        }
+
+        @Override
+        public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+            onUpgradeDatabase(db, oldVersion, newVersion);
+        }
     }
 }
