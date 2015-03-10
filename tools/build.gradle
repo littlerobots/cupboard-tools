@@ -1,4 +1,8 @@
 apply plugin: 'com.android.library'
+apply plugin: 'maven-publish'
+apply plugin: 'com.jfrog.bintray'
+
+version = '0.1-SNAPSHOT'
 
 android {
     compileSdkVersion 21
@@ -8,7 +12,7 @@ android {
         minSdkVersion 9
         targetSdkVersion 21
         versionCode 1
-        versionName "1.0"
+        versionName version
     }
 
     compileOptions {
@@ -19,6 +23,56 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+task sourcesJar(type: Jar) {
+    from android.sourceSets.main.java.srcDirs
+    classifier = 'sources'
+}
+
+task javadoc(type: Javadoc) {
+    source = android.sourceSets.main.java.srcDirs
+    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+    failOnError = false;
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId 'nl.littlerobots'
+            artifactId 'cupboard-tools'
+            version project.version
+            artifact "${project.buildDir}/outputs/aar/tools-release.aar"
+            artifact sourcesJar
+            artifact javadocJar
+        }
+    }
+}
+
+if (project.has('bintrayUser')) {
+    bintray {
+        user = bintrayUser
+        key = bintrayKey
+        publications = ['maven']
+
+        pkg {
+            repo = 'android'
+            userOrg = 'littlerobots'
+            name = 'cupboard-tools'
+            websiteUrl = 'https://bitbucket.org/littlerobots/cupboard-tools'
+            vcsUrl = "https://bitbucket.org/littlerobots/cupboard-tools"
+
+            licenses = ['Apache-2.0']
+            version {
+                name = project.version
+            }
         }
     }
 }
