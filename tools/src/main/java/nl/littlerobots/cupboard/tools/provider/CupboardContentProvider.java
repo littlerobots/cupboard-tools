@@ -156,7 +156,7 @@ public abstract class CupboardContentProvider extends SQLiteContentProvider {
     }
 
     private Cursor notifyingCursor(Uri uri, Cursor cursor) {
-        if (cursor != null && !uri.getQueryParameter(NOTIFY_PARAMETER).equals("false")) {
+        if (cursor != null && !"false".equals(uri.getQueryParameter(NOTIFY_PARAMETER))) {
             Class<?> clz = mUriHelper.getMatchedClass(uri);
             cursor.setNotificationUri(getContext().getContentResolver(), mUriHelper.getUri(clz));
         }
