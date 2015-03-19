@@ -40,7 +40,7 @@ public abstract class CupboardContentProvider extends SQLiteContentProvider {
     private final String mDatabaseName;
     private final int mDatabaseVersion;
     protected Cupboard mCupboard = cupboard();
-    private UriHelper mUriHelper;
+    protected UriHelper mUriHelper;
 
     protected CupboardContentProvider(String databaseName, int databaseVersion) {
         mDatabaseName = databaseName;
