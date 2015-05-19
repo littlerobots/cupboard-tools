@@ -3,7 +3,6 @@ package nl.littlerobots.cupboard.tools.provider;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
-import android.content.pm.ProviderInfo;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
@@ -36,20 +35,20 @@ public abstract class CupboardContentProvider extends SQLiteContentProvider {
     public static final String GROUP_BY_PARAMETER = "groupBy";
     public static final String HAVING_PARAMETER = "having";
     private static final String DEFAULT_DATABASE_NAME = "cupboard.db";
-    private static final int DEFAULT_DATABASE_VERSION = 1;
     private final String mDatabaseName;
     private final int mDatabaseVersion;
     protected Cupboard mCupboard = cupboard();
     protected UriHelper mUriHelper;
 
-    protected CupboardContentProvider(String databaseName, int databaseVersion) {
+    protected CupboardContentProvider(String authority, String databaseName, int databaseVersion) {
         mDatabaseName = databaseName;
         mDatabaseVersion = databaseVersion;
         mCupboard = createCupboard();
+        mUriHelper = UriHelper.with(mCupboard).forAuthority(authority);
     }
 
-    protected CupboardContentProvider(int databaseVersion) {
-        this(DEFAULT_DATABASE_NAME, databaseVersion);
+    protected CupboardContentProvider(String authority, int databaseVersion) {
+        this(authority, DEFAULT_DATABASE_NAME, databaseVersion);
     }
 
     /**
@@ -155,20 +154,12 @@ public abstract class CupboardContentProvider extends SQLiteContentProvider {
         throw new IllegalArgumentException("Unknown uri for query: " + uri);
     }
 
-    private Cursor notifyingCursor(Uri uri, Cursor cursor) {
+    protected Cursor notifyingCursor(Uri uri, Cursor cursor) {
         if (cursor != null && !"false".equals(uri.getQueryParameter(NOTIFY_PARAMETER))) {
             Class<?> clz = mUriHelper.getMatchedClass(uri);
             cursor.setNotificationUri(getContext().getContentResolver(), mUriHelper.getUri(clz));
         }
         return cursor;
-    }
-
-    @Override
-    public void attachInfo(Context context, ProviderInfo info) {
-        super.attachInfo(context, info);
-        if (info != null) {
-            mUriHelper = UriHelper.with(mCupboard).forAuthority(info.authority);
-        }
     }
 
     @Override
