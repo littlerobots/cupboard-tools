@@ -16,11 +16,9 @@
 
 package nl.littlerobots.example.provider;
 
-import android.content.ContentValues;
-import android.database.sqlite.SQLiteDatabase;
-import android.net.Uri;
-
 import com.google.gson.Gson;
+
+import android.database.sqlite.SQLiteDatabase;
 
 import java.util.ArrayList;
 
@@ -80,14 +78,5 @@ public class MyProvider extends CupboardContentProvider {
         // won't be stored as separate entities here. They will be
         // embedded in the Plateau entity that is stored as json
         cupboard().withDatabase(db).put(dutchPlate);
-    }
-
-    @Override
-    protected Uri insertInTransaction(Uri uri, ContentValues values) {
-        if (mUriHelper.getMatchedClass(uri) == Cheese.class && mUriHelper.isCollection(uri)) {
-            values.put("sync_date", System.currentTimeMillis());
-
-        }
-        return super.insertInTransaction(uri, values);
     }
 }
