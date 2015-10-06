@@ -161,7 +161,7 @@ querying the 1:1 relation would not be possible, since the field is stored as Js
 
 ## Repository
 
-The repository is hosted on [Bintray][5].
+The repository is hosted on [Bintray][5]. Make sure you add `jcenter()` to your Gradle build file!
 
 # License
 
