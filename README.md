@@ -137,11 +137,14 @@ To tell Cupboard to use `ListFieldConverter` for all `List` types, you need to d
 1. Set the created instance as the default instance returned by `cupboard()`
 
 
-    :::java
-    // register a ListFieldConverterFactory that will serialize any List<> to json in the database
-    // using Gson
-    CupboardFactory.setCupboard(new CupboardBuilder().
-                                    registerFieldConverterFactory(new ListFieldConverterFactory(new Gson())).build());
+    
+```
+#!java
+// register a ListFieldConverterFactory that will serialize any List<> to json in the database
+// using Gson
+CupboardFactory.setCupboard(new CupboardBuilder().
+                                registerFieldConverterFactory(new ListFieldConverterFactory(new Gson())).build());
+```
 
 You can pass an instance of `Gson` to further tweak how the POJOs in the list are transformed by Gson.
 
