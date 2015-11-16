@@ -1,66 +1,57 @@
 package nl.littlerobots.cupboard.tools.widget;
 
-import android.annotation.TargetApi;
 import android.content.Context;
 import android.database.Cursor;
-import android.os.Build;
+import android.support.v4.widget.CursorAdapter;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.CursorAdapter;
 
-import nl.qbusict.cupboard.CursorCompartment;
+import nl.qbusict.cupboard.Cupboard;
 
 import static nl.qbusict.cupboard.CupboardFactory.cupboard;
 
 
 /**
- * CupboardCursorLoader is a Loader for a cupboard model class 'T' backed by a Cursor
+ * A Cursor Adapter for a particular entity
  */
 public abstract class CupboardCursorAdapter<T> extends CursorAdapter {
 
-    protected Class<T> clz;
-    protected CursorCompartment cc;
+    private final Cupboard mCupboard;
+    private Class<T> mEntityClass;
 
-    public CupboardCursorAdapter(Context context, Cursor cursor, boolean autoRequery, Class<T> clz) {
-        super(context, cursor, autoRequery);
-
-        this.clz = clz;
-        cc(cursor);
+    public CupboardCursorAdapter(Context context, Class<T> entityClass) {
+        this(context, cupboard(), entityClass, null);
     }
 
-    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-    public CupboardCursorAdapter(Context context, Cursor cursor, int flags, Class<T> clz) {
-        super(context, cursor, flags);
+    public CupboardCursorAdapter(Context context, Cupboard cupboard, Class<T> entityClass) {
+        this(context, cupboard, entityClass, null);
+    }
 
-        this.clz = clz;
-        cc(cursor);
+    public CupboardCursorAdapter(Context context, Cupboard cupboard, Class<T> entityClass, Cursor cursor) {
+        super(context, cursor, false);
+        this.mEntityClass = entityClass;
+        this.mCupboard = cupboard;
     }
 
     public abstract View newView(Context context, T model, ViewGroup parent);
+
     public abstract void bindView(View view, Context context, T model);
 
     @Override
     public View newView(Context context, Cursor cursor, ViewGroup parent) {
-        return newView(context, get(), parent);
+        return newView(context, getItem(cursor.getPosition()), parent);
     }
 
     @Override
     public void bindView(View view, Context context, Cursor cursor) {
-        bindView(view, context, get());
+        bindView(view, context, getItem(cursor.getPosition()));
     }
 
-    @Override
-    public Cursor swapCursor(Cursor newCursor) {
-        cc(newCursor);
-
-        return super.swapCursor(newCursor);
-    }
-
-    protected T get() {
-        return cc.get(clz);
-    }
-
-    protected void cc(Cursor cursor) {
-        cc = cupboard().withCursor(cursor);
+    public T getItem(int position) {
+        if (getCursor().moveToPosition(position)) {
+            return mCupboard.withCursor(getCursor()).get(mEntityClass);
+        } else {
+            throw new IllegalArgumentException("Invalid position: " + position);
+        }
     }
 }
