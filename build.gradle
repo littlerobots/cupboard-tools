@@ -17,4 +17,7 @@ allprojects {
     }
 
     group = 'nl.littlerobots'
+    ext {
+        cupboardVersion = "2.1.4"
+    }
 }

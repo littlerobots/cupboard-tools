@@ -26,14 +26,12 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.CursorAdapter;
 import android.widget.TextView;
 
 import nl.littlerobots.cupboard.tools.provider.UriHelper;
+import nl.littlerobots.cupboard.tools.widget.CupboardCursorAdapter;
 import nl.littlerobots.example.model.Cheese;
 import nl.littlerobots.example.provider.MyProvider;
-
-import static nl.qbusict.cupboard.CupboardFactory.cupboard;
 
 public class ExampleActivity extends ListActivity implements LoaderCallbacks<Cursor> {
 
@@ -64,20 +62,19 @@ public class ExampleActivity extends ListActivity implements LoaderCallbacks<Cur
         getLoaderManager().initLoader(0, null, this);
     }
 
-    private static class CheeseAdapter extends CursorAdapter {
+    private static class CheeseAdapter extends CupboardCursorAdapter<Cheese> {
 
         public CheeseAdapter(Context context) {
-            super(context, null, 0);
+            super(context, Cheese.class);
         }
 
         @Override
-        public View newView(Context context, Cursor cursor, ViewGroup parent) {
+        public View newView(Context context, Cheese model, ViewGroup parent) {
             return LayoutInflater.from(context).inflate(android.R.layout.simple_list_item_1, parent, false);
         }
 
         @Override
-        public void bindView(View view, Context context, Cursor cursor) {
-            Cheese cheese = cupboard().withCursor(cursor).get(Cheese.class);
+        public void bindView(View view, Context context, Cheese cheese) {
             ((TextView) view).setText(cheese.name);
         }
     }

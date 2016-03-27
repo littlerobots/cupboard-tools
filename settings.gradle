@@ -1,1 +1,1 @@
-include ':tools', ':example'
+include ':example', ':provider', ':recyclerview', ':gson', ':moshi', ':cursoradapter'
