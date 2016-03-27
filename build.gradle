@@ -6,8 +6,6 @@ buildscript {
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:1.5.0'
-        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.0'
-        classpath 'com.novoda:bintray-release:0.2.7'
     }
 }
 
@@ -16,7 +14,7 @@ allprojects {
         jcenter()
     }
 
-    group = 'nl.littlerobots'
+    group = 'nl.littlerobots.cupboard-tools'
     ext {
         cupboardVersion = "2.1.4"
     }
