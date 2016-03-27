@@ -22,7 +22,7 @@ import android.database.sqlite.SQLiteDatabase;
 
 import java.util.ArrayList;
 
-import nl.littlerobots.cupboard.tools.convert.ListFieldConverterFactory;
+import nl.littlerobots.cupboard.tools.gson.GsonListFieldConverterFactory;
 import nl.littlerobots.cupboard.tools.provider.CupboardContentProvider;
 import nl.littlerobots.example.BuildConfig;
 import nl.littlerobots.example.model.Cheese;
@@ -39,7 +39,7 @@ public class MyProvider extends CupboardContentProvider {
         // register a ListFieldConverterFactory that will serialize any List<> to json in the database
         // using Gson
         CupboardFactory.setCupboard(new CupboardBuilder().
-                registerFieldConverterFactory(new ListFieldConverterFactory(new Gson())).build());
+                registerFieldConverterFactory(new GsonListFieldConverterFactory(new Gson())).build());
         cupboard().register(Cheese.class);
         cupboard().register(Plateau.class);
     }
