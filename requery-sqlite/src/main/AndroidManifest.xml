@@ -1,4 +1,3 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="nl.littlerobots.cupboard.tools">
+<manifest package="nl.littlerobots.cupboard.tools.requerysqlite">
 
 </manifest>
