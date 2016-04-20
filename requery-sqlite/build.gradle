@@ -20,11 +20,6 @@ android {
 }
 
 dependencies {
-    repositories {
-        maven {
-            url "https://oss.sonatype.org/content/repositories/snapshots"
-        }
-    }
-    compile "nl.qbusict:cupboard:2.2.0-SNAPSHOT"
-    provided 'io.requery:sqlite-android:3.12.1'
+    compile "nl.qbusict:cupboard:${cupboardVersion}"
+    compile 'io.requery:sqlite-android:3.12.1'
 }

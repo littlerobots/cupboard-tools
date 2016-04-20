@@ -6,10 +6,10 @@ import android.database.Cursor;
 import io.requery.android.database.sqlite.SQLiteDatabase;
 import nl.qbusict.cupboard.CupboardDatabase;
 
-public class SQLiteV3CupboardDatabase implements CupboardDatabase {
+public class RequerySQLiteCupboardDatabase implements CupboardDatabase {
     private final SQLiteDatabase mDatabase;
 
-    public SQLiteV3CupboardDatabase(SQLiteDatabase mDatabase) {
+    public RequerySQLiteCupboardDatabase(SQLiteDatabase mDatabase) {
         this.mDatabase = mDatabase;
     }
 
