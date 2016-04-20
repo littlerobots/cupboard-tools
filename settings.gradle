@@ -1,1 +1,1 @@
-include ':example', ':provider', ':recyclerview', ':gson', ':moshi', ':cursoradapter', ':sqlcipher', ':requery-sqlite'
+include ':example', ':provider', ':recyclerview', ':gson', ':moshi', ':cursoradapter', ':sqlcipher'
