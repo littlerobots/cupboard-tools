@@ -47,6 +47,7 @@ public abstract class CupboardContentProvider extends SQLiteContentProvider {
      */
     public static final String NOTIFY_PARAMETER = "notify";
     public static final String LIMIT_PARAMETER = "limit";
+    public static final String OFFSET_PARAMETER = "offset";
     public static final String DISTINCT_PARAMETER = "distinct";
     public static final String GROUP_BY_PARAMETER = "groupBy";
     public static final String HAVING_PARAMETER = "having";
@@ -154,6 +155,10 @@ public abstract class CupboardContentProvider extends SQLiteContentProvider {
                 String limit = uri.getQueryParameter(LIMIT_PARAMETER);
                 if (limit != null) {
                     builder.limit(Integer.parseInt(limit));
+                }
+                String offset = uri.getQueryParameter(OFFSET_PARAMETER);
+                if (offset != null) {
+                    builder.offset(Integer.parseInt(offset));
                 }
                 String distinct = uri.getQueryParameter(DISTINCT_PARAMETER);
                 if ("true".equals(distinct)) {
