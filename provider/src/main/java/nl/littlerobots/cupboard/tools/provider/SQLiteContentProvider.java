@@ -1,4 +1,5 @@
-package nl.littlerobots.cupboard.tools.provider;/*
+package nl.littlerobots.cupboard.tools.provider;
+/*
  * Copyright (C) 2009 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,6 +21,7 @@ import android.content.ContentProviderResult;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.OperationApplicationException;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteTransactionListener;
@@ -27,11 +29,13 @@ import android.net.Uri;
 
 import java.util.ArrayList;
 
+import nl.qbusict.cupboard.CupboardDatabase;
+
 /**
  * General purpose {@link android.content.ContentProvider} base class that uses SQLiteDatabase for storage.
  */
 public abstract class SQLiteContentProvider extends ContentProvider
-        implements SQLiteTransactionListener {
+        implements TransactionListener {
 
     private static final String TAG = "SQLiteContentProvider";
     private static final int SLEEP_AFTER_YIELD_DELAY = 4000;
@@ -40,10 +44,22 @@ public abstract class SQLiteContentProvider extends ContentProvider
      */
     private static final int MAX_OPERATIONS_PER_YIELD_POINT = 500;
     private final ThreadLocal<Boolean> mApplyingBatch = new ThreadLocal<Boolean>();
-    protected SQLiteDatabase mDb;
+    protected CupboardProviderDatabase mDb;
     private SQLiteOpenHelper mOpenHelper;
     private volatile boolean mNotifyChange;
     private volatile boolean mSyncToNetwork;
+    private volatile CupboardProviderDatabase mDatabase;
+
+    public interface CupboardProviderDatabase extends CupboardDatabase {
+        void beginTransactionWithListener(nl.littlerobots.cupboard.tools.provider.TransactionListener listener);
+
+        /**
+         * Check if the database is closed
+         * @return
+         */
+        boolean isClosed();
+        boolean yieldIfContendedSafely(int sleepAfterYieldDelay);
+    }
 
     /**
      * @return Number of operations that can be applied at once without a yield point.
@@ -83,6 +99,27 @@ public abstract class SQLiteContentProvider extends ContentProvider
         return mOpenHelper;
     }
 
+    /**
+     * Get a writeable database. This will return the cached instance from {@link #openDatabase()}, checking
+     * that the database connection is still valid.
+     * @return the database
+     */
+    final protected CupboardProviderDatabase getWritableDatabase() {
+        if (mDatabase == null || mDatabase.isClosed()) {
+            mDatabase = openDatabase();
+        }
+        return mDatabase;
+    }
+
+    /**
+     * Open the database. This method will be called when a writeable database is required in {@link #getWritableDatabase()}.
+     *
+     * @return the database
+     */
+    protected CupboardProviderDatabase openDatabase() {
+        return new PlatformSqliteCupboardProviderDatabase(getDatabaseHelper().getWritableDatabase());
+    }
+
     private boolean applyingBatch() {
         return mApplyingBatch.get() != null && mApplyingBatch.get();
     }
@@ -92,7 +129,7 @@ public abstract class SQLiteContentProvider extends ContentProvider
         Uri result = null;
         boolean applyingBatch = applyingBatch();
         if (!applyingBatch) {
-            mDb = mOpenHelper.getWritableDatabase();
+            mDb = getWritableDatabase();
             mDb.beginTransactionWithListener(this);
             try {
                 result = insertInTransaction(uri, values);
@@ -117,7 +154,7 @@ public abstract class SQLiteContentProvider extends ContentProvider
     @Override
     public int bulkInsert(Uri uri, ContentValues[] values) {
         int numValues = values.length;
-        mDb = mOpenHelper.getWritableDatabase();
+        mDb = getWritableDatabase();
         mDb.beginTransactionWithListener(this);
         try {
             for (int i = 0; i < numValues; i++) {
@@ -126,7 +163,7 @@ public abstract class SQLiteContentProvider extends ContentProvider
                     mNotifyChange = true;
                 }
                 boolean savedNotifyChange = mNotifyChange;
-                SQLiteDatabase savedDb = mDb;
+                CupboardProviderDatabase savedDb = mDb;
                 mDb.yieldIfContendedSafely();
                 mDb = savedDb;
                 mNotifyChange = savedNotifyChange;
@@ -145,7 +182,7 @@ public abstract class SQLiteContentProvider extends ContentProvider
         int count = 0;
         boolean applyingBatch = applyingBatch();
         if (!applyingBatch) {
-            mDb = mOpenHelper.getWritableDatabase();
+            mDb = getWritableDatabase();
             mDb.beginTransactionWithListener(this);
             try {
                 count = updateInTransaction(uri, values, selection, selectionArgs);
@@ -173,7 +210,7 @@ public abstract class SQLiteContentProvider extends ContentProvider
         int count = 0;
         boolean applyingBatch = applyingBatch();
         if (!applyingBatch) {
-            mDb = mOpenHelper.getWritableDatabase();
+            mDb = getWritableDatabase();
             mDb.beginTransactionWithListener(this);
             try {
                 count = deleteInTransaction(uri, selection, selectionArgs);
@@ -200,7 +237,7 @@ public abstract class SQLiteContentProvider extends ContentProvider
             throws OperationApplicationException {
         int ypCount = 0;
         int opCount = 0;
-        mDb = mOpenHelper.getWritableDatabase();
+        mDb = getWritableDatabase();
         mDb.beginTransactionWithListener(this);
         try {
             mApplyingBatch.set(true);
@@ -218,7 +255,7 @@ public abstract class SQLiteContentProvider extends ContentProvider
                     opCount = 0;
                     boolean savedNotifyChange = mNotifyChange;
                     if (mDb.yieldIfContendedSafely(SLEEP_AFTER_YIELD_DELAY)) {
-                        mDb = mOpenHelper.getWritableDatabase();
+                        mDb = getWritableDatabase();
                         mNotifyChange = savedNotifyChange;
                         ypCount++;
                     }
@@ -268,5 +305,103 @@ public abstract class SQLiteContentProvider extends ContentProvider
     protected void setSyncToNetwork() {
         mSyncToNetwork = true;
         mNotifyChange = true;
+    }
+
+    private static class PlatformSqliteCupboardProviderDatabase implements CupboardProviderDatabase {
+        private final SQLiteDatabase mDatabase;
+
+        public PlatformSqliteCupboardProviderDatabase(SQLiteDatabase database) {
+            mDatabase = database;
+        }
+
+        @Override
+        public void beginTransactionWithListener(final nl.littlerobots.cupboard.tools.provider.TransactionListener listener) {
+            mDatabase.beginTransactionWithListener(new SQLiteTransactionListener() {
+                @Override
+                public void onBegin() {
+                    listener.onBegin();
+                }
+
+                @Override
+                public void onCommit() {
+                    listener.onCommit();
+                }
+
+                @Override
+                public void onRollback() {
+                    listener.onRollback();
+                }
+            });
+        }
+
+        @Override
+        public boolean isClosed() {
+            return !mDatabase.isOpen();
+        }
+
+        @Override
+        public boolean yieldIfContendedSafely(int sleepAfterYieldDelay) {
+            return mDatabase.yieldIfContendedSafely(sleepAfterYieldDelay);
+        }
+
+        @Override
+        public long insertOrThrow(String table, String nullColumnHack, ContentValues values) {
+            return mDatabase.insertOrThrow(table, nullColumnHack, values);
+        }
+
+        @Override
+        public long replaceOrThrow(String table, String nullColumnHack, ContentValues values) {
+            return mDatabase.replaceOrThrow(table, nullColumnHack, values);
+        }
+
+        @Override
+        public int update(String table, ContentValues values, String selection, String[] selectionArgs) {
+            return mDatabase.update(table, values, selection, selectionArgs);
+        }
+
+        @Override
+        public Cursor query(boolean distinct, String table, String[] columns, String selection, String[] selectionArgs, String groupBy, String having, String orderBy, String limit) {
+            return mDatabase.query(distinct, table, columns, selection, selectionArgs, groupBy, having, orderBy, limit);
+        }
+
+        @Override
+        public Cursor rawQuery(String sql, String[] selectionArgs) {
+            return mDatabase.rawQuery(sql, selectionArgs);
+        }
+
+        @Override
+        public int delete(String table, String selection, String[] selectionArgs) {
+            return mDatabase.delete(table, selection, selectionArgs);
+        }
+
+        @Override
+        public boolean inTransaction() {
+            return mDatabase.inTransaction();
+        }
+
+        @Override
+        public void beginTransaction() {
+            mDatabase.beginTransaction();
+        }
+
+        @Override
+        public void yieldIfContendedSafely() {
+            mDatabase.yieldIfContendedSafely();
+        }
+
+        @Override
+        public void setTransactionSuccessful() {
+            mDatabase.setTransactionSuccessful();
+        }
+
+        @Override
+        public void endTransaction() {
+            mDatabase.endTransaction();
+        }
+
+        @Override
+        public void execSQL(String sql) {
+            mDatabase.execSQL(sql);
+        }
     }
 }

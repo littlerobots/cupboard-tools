@@ -21,7 +21,7 @@ android {
 
 dependencies {
     compile "com.android.support:appcompat-v7:${androidSupportVersion}"
-    compile "com.google.code.gson:gson:${gsonVersion}"
+    compile "com.google.code.gson:gson:2.6.2"
     compile project(':gson')
     compile project(':provider')
     compile project(':cursoradapter')

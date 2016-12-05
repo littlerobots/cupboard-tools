@@ -26,6 +26,7 @@ import android.net.Uri;
 import android.provider.BaseColumns;
 
 import nl.qbusict.cupboard.Cupboard;
+import nl.qbusict.cupboard.CupboardDatabase;
 import nl.qbusict.cupboard.DatabaseCompartment.QueryBuilder;
 
 import static nl.qbusict.cupboard.CupboardFactory.cupboard;
@@ -107,7 +108,7 @@ public abstract class CupboardContentProvider extends SQLiteContentProvider {
     protected Uri insertInTransaction(Uri uri, ContentValues values) {
         if (mUriHelper.matches(uri)) {
             Class<?> entityClass = mUriHelper.getMatchedClass(uri);
-            SQLiteDatabase db = getDatabaseHelper().getWritableDatabase();
+            CupboardDatabase db = getWritableDatabase();
             setExistingId(db, uri, entityClass, values);
             long id = mCupboard.withDatabase(db).put(entityClass, values);
             return mUriHelper.isCollection(uri) ? ContentUris.withAppendedId(uri, id) : uri;
@@ -119,10 +120,10 @@ public abstract class CupboardContentProvider extends SQLiteContentProvider {
     protected int updateInTransaction(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
         if (mUriHelper.matches(uri)) {
             if (mUriHelper.isCollection(uri)) {
-                return mCupboard.withDatabase(getDatabaseHelper().getWritableDatabase()).update(mUriHelper.getMatchedClass(uri), values, selection, selectionArgs);
+                return mCupboard.withDatabase(getWritableDatabase()).update(mUriHelper.getMatchedClass(uri), values, selection, selectionArgs);
             } else {
                 values.put(BaseColumns._ID, ContentUris.parseId(uri));
-                return mCupboard.withDatabase(getDatabaseHelper().getWritableDatabase()).update(mUriHelper.getMatchedClass(uri), values);
+                return mCupboard.withDatabase(getWritableDatabase()).update(mUriHelper.getMatchedClass(uri), values);
             }
         }
         throw new IllegalArgumentException("Unknown uri for update: " + uri);
@@ -132,9 +133,9 @@ public abstract class CupboardContentProvider extends SQLiteContentProvider {
     protected int deleteInTransaction(Uri uri, String selection, String[] selectionArgs) {
         if (mUriHelper.matches(uri)) {
             if (mUriHelper.isCollection(uri)) {
-                return mCupboard.withDatabase(getDatabaseHelper().getWritableDatabase()).delete(mUriHelper.getMatchedClass(uri), selection, selectionArgs);
+                return mCupboard.withDatabase(getWritableDatabase()).delete(mUriHelper.getMatchedClass(uri), selection, selectionArgs);
             } else {
-                if (mCupboard.withDatabase(getDatabaseHelper().getWritableDatabase()).delete(mUriHelper.getMatchedClass(uri), ContentUris.parseId(uri))) {
+                if (mCupboard.withDatabase(getWritableDatabase()).delete(mUriHelper.getMatchedClass(uri), ContentUris.parseId(uri))) {
                     return 1;
                 }
                 return 0;
@@ -147,7 +148,7 @@ public abstract class CupboardContentProvider extends SQLiteContentProvider {
     public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
         if (mUriHelper.matches(uri)) {
             if (mUriHelper.isCollection(uri)) {
-                QueryBuilder<?> builder = mCupboard.withDatabase(getDatabaseHelper().getWritableDatabase()).query(mUriHelper.getMatchedClass(uri)).
+                QueryBuilder<?> builder = mCupboard.withDatabase(getWritableDatabase()).query(mUriHelper.getMatchedClass(uri)).
                         withProjection(projection).
                         withSelection(selection, selectionArgs).
                         orderBy(sortOrder);
@@ -163,7 +164,7 @@ public abstract class CupboardContentProvider extends SQLiteContentProvider {
                 builder.having(uri.getQueryParameter(HAVING_PARAMETER));
                 return notifyingCursor(uri, builder.getCursor());
             } else {
-                return notifyingCursor(uri, mCupboard.withDatabase(getDatabaseHelper().getWritableDatabase()).query(mUriHelper.getMatchedClass(uri)).byId(ContentUris.parseId(uri)).getCursor());
+                return notifyingCursor(uri, mCupboard.withDatabase(getWritableDatabase()).query(mUriHelper.getMatchedClass(uri)).byId(ContentUris.parseId(uri)).getCursor());
             }
         }
 
@@ -188,7 +189,7 @@ public abstract class CupboardContentProvider extends SQLiteContentProvider {
         getContext().getContentResolver().notifyChange(mUriHelper.getBaseUri(), null, syncToNetwork);
     }
 
-    private void setExistingId(SQLiteDatabase db, Uri uri, Class<?> entityClass, ContentValues contentValues) {
+    private void setExistingId(CupboardDatabase db, Uri uri, Class<?> entityClass, ContentValues contentValues) {
         if (mUriHelper.isCollection(uri)) {
             setExistingId(db, entityClass, contentValues);
         }
@@ -202,7 +203,7 @@ public abstract class CupboardContentProvider extends SQLiteContentProvider {
      * @param entityClass   the entity class
      * @param contentValues the content values for the entity to be inserted.
      */
-    protected void setExistingId(SQLiteDatabase db, Class<?> entityClass, ContentValues contentValues) {
+    protected void setExistingId(CupboardDatabase db, Class<?> entityClass, ContentValues contentValues) {
     }
 
     private class DatabaseHelper extends SQLiteOpenHelper {

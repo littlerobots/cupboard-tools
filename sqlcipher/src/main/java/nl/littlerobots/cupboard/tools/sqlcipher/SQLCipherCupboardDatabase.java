@@ -7,8 +7,13 @@ import net.sqlcipher.database.SQLiteDatabase;
 
 import nl.qbusict.cupboard.CupboardDatabase;
 
+/**
+ * An implementation of {@link CupboardDatabase} for SQLCipher.
+ *
+ * Use with {@link nl.qbusict.cupboard.Cupboard#withDatabase(CupboardDatabase)}
+ */
 public class SQLCipherCupboardDatabase implements CupboardDatabase {
-    private final SQLiteDatabase mDatabase;
+    final SQLiteDatabase mDatabase;
 
     public SQLCipherCupboardDatabase(SQLiteDatabase mDatabase) {
         this.mDatabase = mDatabase;

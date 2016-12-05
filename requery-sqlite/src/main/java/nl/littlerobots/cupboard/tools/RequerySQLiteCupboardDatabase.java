@@ -6,8 +6,13 @@ import android.database.Cursor;
 import io.requery.android.database.sqlite.SQLiteDatabase;
 import nl.qbusict.cupboard.CupboardDatabase;
 
+/**
+ * An implementation of {@link CupboardDatabase} for requery sqlite.
+ *
+ * Use with {@link nl.qbusict.cupboard.Cupboard#withDatabase(CupboardDatabase)}
+ */
 public class RequerySQLiteCupboardDatabase implements CupboardDatabase {
-    private final SQLiteDatabase mDatabase;
+    final SQLiteDatabase mDatabase;
 
     public RequerySQLiteCupboardDatabase(SQLiteDatabase mDatabase) {
         this.mDatabase = mDatabase;
