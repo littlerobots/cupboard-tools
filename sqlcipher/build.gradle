@@ -26,6 +26,6 @@ android {
 
 dependencies {
     compile "nl.qbusict:cupboard:${cupboardVersion}"
-    compile 'net.zetetic:android-database-sqlcipher:3.5.1'
+    compile 'net.zetetic:android-database-sqlcipher:3.5.4'
     provided project(':provider')
 }
