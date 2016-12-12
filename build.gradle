@@ -23,7 +23,7 @@ allprojects {
         buildToolsVersion = "24.0.3"
         targetSdkVersion = 23
         minSdkVersion = 14
-        cupboardVersion = "2.2.0-SNAPSHOT"
+        cupboardVersion = "2.2.0"
         androidSupportVersion = "23.3.0"
     }
 }
