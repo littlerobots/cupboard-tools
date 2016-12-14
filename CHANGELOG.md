@@ -1,3 +1,8 @@
+0.3.1
+-----
+* Added offset parameter to provider uri
+* Updated cupboard dependency to use a stable version
+
 0.3.0
 -----
 * Published on Maven Central with changed group name to `nl.littlerobots.cupboard-tools`

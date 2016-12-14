@@ -2,13 +2,19 @@
 The goal of this project is to complement [Cupboard][1] with common and useful tools, without messing too much
 with the core project, which is considered to be pretty stable.
 
-Currently it consists of a [ContentProvider][2] and a [Helper for Uris][3] and some [converters][4].
+Currently it consists of multiple small modules:
+ 
+* The [provider][6] module adds a standard [ContentProvider][7] and helper for dealing with content uris (see below)
+* The [moshi][8] and [gson][9] modules both add field converters that store objects and collections as json
+* The [cursoradapter][10] and [recycerview][11] modules implement `CupboardCursorAdapter`s for `ListView` and `RecyclerView`
+* The [sqlcipher][12] module adds a `CupboardDatabase` implementation that allows the use of [SQLCipher][13] in addition to the platform SQLite implementation.
+* The [requery-sqlite][14] module adds a `CupboardDatabase` similar implementation for [the requery sqlite bindings][15] 
 
 ## Using from Gradle
-Cupboard tools is hosted on [Bintray][5] and jcenter. To use cupboard-tools, just add a depdendency to your `build.gradle`
+Cupboard tools is hosted on [Maven Central][5]. To use cupboard-tools, just add a dependency to your `build.gradle` for the module(s) you'd like to use, for example
 
 ```
-compile 'nl.littlerobots:cupboard-tools:<version>'
+compile 'nl.littlerobots.cupboard-tools:provider:<version>'
 ```
 
 # CupboardContentProvider
@@ -70,6 +76,9 @@ Working with the content provider, leveraging `UriHelper`, looks like this:
 Note that is just "plain" Cupboard code, just that the `Uri` is retrieved from the `UriHelper`. There's nothing special to
 the uri either, it can be queried with or without Cupboard.
 
+If you want to use an alternative database implementation (most likely SQLCipher) then this is also possible by overriding the `getDatabase()` method and
+supplying your own implementation of `CupboardProviderDatabase` in the `openDatabase()` method. 
+
 # UriHelper
 
 In the example above, we already used `UriHelper`. `UriHelper` maps entity classes to content provider uris. There are
@@ -110,10 +119,10 @@ we effectively check if this uri operates on an entity with it's id set or not.
 In scenarios where entities can be modified from multiple sources it's often useful to have multiple `UriHelper`s. For example changes that
 are coming from `SyncAdapter` operations might be treated differently compared to changes that a user is making.
 
-# ListFieldConverter
+# GsonListFieldConverter and MoshiListFieldConverter
 
 By design, Cupboard does not deal with the relational mapping of objects. In the cases where you don't need the relational aspect,
-but you do need to store a `List<>` of things with the entity, `ListFieldConverter` can be used to "embed" the collection in the Cupboard
+but you do need to store a `List<>` of things with the entity, `GsonListFieldConverter` and `MoshiListFieldConverter can be used to "embed" the collection in the Cupboard
 entity.
 
 The entity below is just a plain POJO:
@@ -126,12 +135,12 @@ The entity below is just a plain POJO:
 
 By default, Cupboard will throw an error when you try to `register()` this entity, since it does not know how to handle the `List<Cheese>`
 property. Cupboard however supports the concept of `FieldConverter`s which specify how a field type is converted to and from the
-database. `ListFieldConverter` will use the [Gson][6] library to serialize and deserialize the list. Note that this has two consequences:
+database. `GsonListFieldConverter` will use the [Gson][4] library to serialize and deserialize the list. Note that this has two consequences:
 
 1. The `Cheese` class does not have to be an entity that is registered with Cupboard
 1. The list is serialized, so it's not (easily) possible to query the implicit relation between a `Plateau` and its `Cheese`s
 
-To tell Cupboard to use `ListFieldConverter` for all `List` types, you need to do two things:
+To tell Cupboard to use `GsonListFieldConverter` for all `List` types, you need to do two things:
 
 1. Create a new `Cupboard` instance using `CupboardBuilder` and register the field converter
 1. Set the created instance as the default instance returned by `cupboard()`
@@ -143,15 +152,15 @@ To tell Cupboard to use `ListFieldConverter` for all `List` types, you need to d
 // register a ListFieldConverterFactory that will serialize any List<> to json in the database
 // using Gson
 CupboardFactory.setCupboard(new CupboardBuilder().
-                                registerFieldConverterFactory(new ListFieldConverterFactory(new Gson())).build());
+                                registerFieldConverterFactory(new GsonListFieldConverterFactory(new Gson())).build());
 ```
 
-You can pass an instance of `Gson` to further tweak how the POJOs in the list are transformed by Gson.
+You can pass an instance of `Gson` to further tweak how the POJOs in the list are transformed by Gson. The `Moshi` version works in a similar way.
 
-# GsonFieldConverter
+# GsonFieldConverter and MoshiFieldConverter
 
-Sometimes it's convenient to embed any POJO (including Cupboard entities) if it's used as a field using Gson.
-In that case `GsonFieldConverter` helps.
+Sometimes it's convenient to embed any POJO (including Cupboard entities) if it's used as a field using Gson or Moshi.
+In that case `GsonFieldConverter` and `MoshiFieldConverter` help.
 
 `GsonFieldConverter` is also registered using `CupboardBuilder`
 
@@ -161,10 +170,6 @@ In that case `GsonFieldConverter` helps.
 
 Note that in this case `Cheese` can be either an entity registered with Cupboard, or just a plain POJO. Also in this case,
 querying the 1:1 relation would not be possible, since the field is stored as Json in the database.
-
-## Repository
-
-The repository is hosted on [Bintray][5]. Make sure you add `jcenter()` to your Gradle build file!
 
 # License
 
@@ -184,8 +189,15 @@ The repository is hosted on [Bintray][5]. Make sure you add `jcenter()` to your 
 
 
 [1]: https://bitbucket.org/littlerobots/cupboard
-[2]: https://bitbucket.org/littlerobots/cupboard-tools/src/a89d1c43864890ad3a6dfeb7824d940287c1cea8/tools/src/main/java/nl/littlerobots/cupboard/tools/provider/CupboardContentProvider.java?at=default
-[3]: https://bitbucket.org/littlerobots/cupboard-tools/src/a89d1c43864890ad3a6dfeb7824d940287c1cea8/tools/src/main/java/nl/littlerobots/cupboard/tools/provider/UriHelper.java?at=default
-[4]: https://bitbucket.org/littlerobots/cupboard-tools/src/a89d1c43864890ad3a6dfeb7824d940287c1cea8/tools/src/main/java/nl/littlerobots/cupboard/tools/convert/?at=default
-[5]: https://bintray.com/littlerobots/android/cupboard-tools/view
-[6]: https://github.com/google/gson
+[4]: https://github.com/google/gson
+[5]: http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22nl.littlerobots.cupboard-tools%22
+[6]: http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22nl.littlerobots.cupboard-tools%22%20AND%20a%3A%22provider%22
+[7]: http://developer.android.com/reference/android/content/ContentProvider.html
+[8]: http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22nl.littlerobots.cupboard-tools%22%20AND%20a%3A%22moshi%22
+[9]: http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22nl.littlerobots.cupboard-tools%22%20AND%20a%3A%22gson%22
+[10]: http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22nl.littlerobots.cupboard-tools%22%20AND%20a%3A%22cursoradapter%22
+[11]: http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22nl.littlerobots.cupboard-tools%22%20AND%20a%3A%22recyclerview%22
+[12]: http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22nl.littlerobots.cupboard-tools%22%20AND%20a%3A%22sqlcipher%22
+[13]: https://www.zetetic.net/sqlcipher/
+[14]: http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22nl.littlerobots.cupboard-tools%22%20AND%20a%3A%22requery-sqlite%22
+[15]: https://github.com/requery/sqlite-android
